@@ -11,6 +11,7 @@ from scripts.tilemap import Tilemap
 from scripts.clouds import Clouds
 from scripts.particle import Particle
 from scripts.spark import Spark
+from scripts.star import Star
 
 class Game:
     def __init__(self):
@@ -78,7 +79,12 @@ class Game:
         self.leaf_spawners = []
         for tree in self.tilemap.extract([('large_decor', 2)], keep=True):
             self.leaf_spawners.append(pygame.Rect(4 + tree['pos'][0], 4 + tree['pos'][1], 23, 13))
-            
+
+
+        self.stars = []
+        for star in self.tilemap.extract([('stars', 0)]):
+            self.stars.append(Star(self, star['pos']))
+        
         self.enemies = []
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
             if spawner['variant'] == 0:
@@ -90,7 +96,7 @@ class Game:
         self.projectiles = []
         self.particles = []
         self.sparks = []
-        
+
         self.scroll = [0, 0]
         self.dead = 0
         self.transition = -30
@@ -123,6 +129,7 @@ class Game:
                 if self.dead > 40:
                     self.load_level(self.level)
             
+            
             self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
             self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
@@ -131,6 +138,20 @@ class Game:
                 if random.random() * 49999 < rect.width * rect.height:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
                     self.particles.append(Particle(self, 'leaf', pos, velocity=[-0.1, 0.3], frame=random.randint(0, 20)))
+
+            # STARS
+            for star in self.stars.copy():
+                star.update()
+                star.render(self.display, offset=render_scroll)
+                if self.player.rect().colliderect(star.rect()):
+                    self.stars.remove(star)
+                    #self.player.currency += 1
+                    self.player.star_count += 1
+                    self.sfx['hit'].play()
+                    for i in range(10):
+                        angle = random.random() * math.pi * 2
+                        speed = random.random() * 2
+                        self.sparks.append(Spark(star.pos, angle, speed))
             
             self.clouds.update()
             self.clouds.render(self.display_2, offset=render_scroll)

@@ -76,6 +76,8 @@ class PhysicsEntity:
     def render(self, surf, offset=(0, 0)):
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1]))
         
+        
+
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, 'enemy', pos, size)
@@ -143,6 +145,8 @@ class Player(PhysicsEntity):
         self.jumps = 5
         self.wall_slide = False
         self.dashing = 0
+        self.star_count = 0 
+        # self.font = pygame.font.Font(None, 16)
     
     def update(self, tilemap, movement=(0, 0)):
         super().update(tilemap, movement=movement)
@@ -201,6 +205,9 @@ class Player(PhysicsEntity):
     def render(self, surf, offset=(0, 0)):
         if abs(self.dashing) <= 50:
             super().render(surf, offset=offset)
+        
+        # text = self.font.render(f'Stars: {self.star_count}', True, (255, 255, 255))
+        # surf.blit(text, (surf.get_width() - text.get_width(), 0))
             
     def jump(self):
         if self.wall_slide:
