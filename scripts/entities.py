@@ -146,8 +146,8 @@ class BossEnemy(PhysicsEntity):
         self.walking = 0
         
     def update(self, tilemap, movement=(0, 0)):
-        if self.walking: # was 23 at the end here 
-            if tilemap.solid_check((self.rect().centerx + (-7 if self.flip else 7), self.pos[1] + 46)):
+        if self.walking: # was 23 at the end here +(-7 if self.flip else 7)
+            if tilemap.solid_check((self.rect().centerx, self.pos[1] + 108)):
                 if (self.collisions['right'] or self.collisions['left']):
                     self.flip = not self.flip
                 else:
