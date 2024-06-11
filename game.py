@@ -6,7 +6,7 @@ import random
 import pygame
 
 from scripts.utils import load_image, load_images, Animation
-from scripts.entities import PhysicsEntity, Player, Enemy
+from scripts.entities import PhysicsEntity, Player, Enemy, BossEnemy
 from scripts.tilemap import Tilemap
 from scripts.clouds import Clouds
 from scripts.particle import Particle
@@ -36,6 +36,8 @@ class Game:
             'clouds': load_images('clouds'),
             'enemy/idle': Animation(load_images('entities/enemy/idle'), img_dur=6),
             'enemy/run': Animation(load_images('entities/enemy/run'), img_dur=4),
+            'bossenemy/idle':Animation(load_images('entities/bossenemy/idle'), img_dur=3),
+            'bossenemy/run':Animation(load_images('entities/bossenemy/run'), img_dur=4),
             'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
             'player/run': Animation(load_images('entities/player/run'), img_dur=4),
             'player/jump': Animation(load_images('entities/player/jump')),
@@ -86,12 +88,15 @@ class Game:
             self.stars.append(Star(self, star['pos']))
         
         self.enemies = []
-        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
+        self.MiniBosses = []
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2)]):
             if spawner['variant'] == 0:
                 self.player.pos = spawner['pos']
                 self.player.air_time = 0
-            else:
+            elif spawner['variant'] == 1:
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))
+            elif spawner['variant'] == 2:
+                self.MiniBosses.append(BossEnemy(self, spawner['pos'], (23, 30)))
             
         self.projectiles = []
         self.particles = []
@@ -117,6 +122,7 @@ class Game:
             if not len(self.enemies):
                 self.transition += 1
                 if self.transition > 30:
+                    # moving to next level after all enemies are gone 
                     self.level = min(self.level + 1, len(os.listdir('data/maps')) - 1)
                     self.load_level(self.level)
             if self.transition < 0:
@@ -149,8 +155,8 @@ class Game:
                     self.player.star_count += 1
                     self.sfx['hit'].play()
                     for i in range(10):
-                        angle = random.random() * math.pi * 2
-                        speed = random.random() * 2
+                        angle = random.random() * math.pi * 4
+                        speed = random.random() * 4
                         self.sparks.append(Spark(star.pos, angle, speed))
             
             self.clouds.update()
@@ -158,11 +164,19 @@ class Game:
             
             self.tilemap.render(self.display, offset=render_scroll)
             
+            
+            # killing/removing enemies
             for enemy in self.enemies.copy():
                 kill = enemy.update(self.tilemap, (0, 0))
                 enemy.render(self.display, offset=render_scroll)
                 if kill:
                     self.enemies.remove(enemy)
+            
+            for bossEnemy in self.MiniBosses.copy():
+                kill = bossEnemy.update(self.tilemap, (0, 0))
+                bossEnemy.render(self.display, offset=render_scroll)
+                if kill:
+                    self.MiniBosses.remove(bossEnemy)
             
             if not self.dead:
                 self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))

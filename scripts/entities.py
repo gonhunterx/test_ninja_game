@@ -136,7 +136,69 @@ class Enemy(PhysicsEntity):
         if self.flip:
             surf.blit(pygame.transform.flip(self.game.assets['gun'], True, False), (self.rect().centerx - 4 - self.game.assets['gun'].get_width() - offset[0], self.rect().centery - offset[1]))
         else:
+            # adding the gun to the body of the rect *************************************
             surf.blit(self.game.assets['gun'], (self.rect().centerx + 4 - offset[0], self.rect().centery - offset[1]))
+
+class BossEnemy(PhysicsEntity):
+    def __init__(self, game, pos, size):
+        super().__init__(game, 'bossenemy', pos, size)
+        
+        self.walking = 0
+        
+    def update(self, tilemap, movement=(0, 0)):
+        if self.walking: # was 23 at the end here 
+            if tilemap.solid_check((self.rect().centerx + (-7 if self.flip else 7), self.pos[1] + 46)):
+                if (self.collisions['right'] or self.collisions['left']):
+                    self.flip = not self.flip
+                else:
+                    movement = (movement[0] - 0.5 if self.flip else 0.5, movement[1])
+            else:
+                self.flip = not self.flip
+            self.walking = max(0, self.walking - 1)
+            if not self.walking:
+                dis = (self.game.player.pos[0] - self.pos[0], self.game.player.pos[1] - self.pos[1])
+                if (abs(dis[1]) < 16):
+                    if (self.flip and dis[0] < 0):
+                        self.game.sfx['shoot'].play()
+                        self.game.projectiles.append([[self.rect().centerx - 7, self.rect().centery], -1.5, 0])
+                        for i in range(4):
+                            self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random()))
+                    if (not self.flip and dis[0] > 0):
+                        self.game.sfx['shoot'].play()
+                        self.game.projectiles.append([[self.rect().centerx + 7, self.rect().centery], 1.5, 0])
+                        for i in range(4):
+                            self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5, 2 + random.random()))
+        elif random.random() < 0.01:
+            self.walking = random.randint(30, 120)
+        
+        super().update(tilemap, movement=movement)
+        
+        if movement[0] != 0:
+            self.set_action('run')
+        else:
+            self.set_action('idle')
+            
+        if abs(self.game.player.dashing) >= 50:
+            if self.rect().colliderect(self.game.player.rect()):
+                self.game.screenshake = max(16, self.game.screenshake)
+                self.game.sfx['hit'].play()
+                for i in range(30):
+                    angle = random.random() * math.pi * 2
+                    speed = random.random() * 5
+                    self.game.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
+                    self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
+                self.game.sparks.append(Spark(self.rect().center, 0, 5 + random.random()))
+                self.game.sparks.append(Spark(self.rect().center, math.pi, 5 + random.random()))
+                return True
+            
+    def render(self, surf, offset=(0, 0)):
+        super().render(surf, offset=offset)
+        
+        if self.flip:
+            surf.blit(pygame.transform.flip(self.game.assets['gun'], True, False), (self.rect().centerx - 4 - self.game.assets['gun'].get_width() - offset[0], self.rect().centery - offset[1]))
+        else:
+            surf.blit(self.game.assets['gun'], (self.rect().centerx + 4 - offset[0], self.rect().centery - offset[1]))
+
 
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -146,7 +208,8 @@ class Player(PhysicsEntity):
         self.wall_slide = False
         self.dashing = 0
         self.star_count = 0 
-        # self.font = pygame.font.Font(None, 16)
+        self.font = pygame.font.Font(None, 32)
+        self.lives = 5
     
     def update(self, tilemap, movement=(0, 0)):
         super().update(tilemap, movement=movement)
@@ -206,8 +269,8 @@ class Player(PhysicsEntity):
         if abs(self.dashing) <= 50:
             super().render(surf, offset=offset)
         
-        # text = self.font.render(f'Stars: {self.star_count}', True, (255, 255, 255))
-        # surf.blit(text, (surf.get_width() - text.get_width(), 0))
+        text = self.font.render(f'Stars: {self.star_count}', True, (255, 255, 255))
+        surf.blit(text, (surf.get_width() - text.get_width(), 0))
             
     def jump(self):
         if self.wall_slide:

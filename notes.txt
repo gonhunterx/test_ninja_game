@@ -1,0 +1,21 @@
+TO DO: 
+- Create main menu with esc
+- Add in a new enemy (stone boss maybe) 
+- Add in a gun for the player to recieve 
+- enlarge game? (more info needed) 
+- Have an item drop and be equipt 
+
+In progress: 
+- Create new ground item (anything for now)
+
+Done: 
+- Add in the star counter 
+
+
+
+
+To use the map editor: 
+- change map you want to change to map.json 
+- replace it in the file as 0.json to test it in development 
+- press 't' to transofrm the grounds in edit mode 
+- press 'o' to output the file as map.json for editing or saving 

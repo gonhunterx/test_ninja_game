@@ -1,4 +1,5 @@
 import sys
+# in my editor I am assuming a specific path for editing existing files. 
 
 import pygame
 
@@ -11,7 +12,7 @@ class Editor:
     def __init__(self):
         pygame.init()
 
-        pygame.display.set_caption('editor')
+        pygame.display.set_caption('my wittle editor')
         self.screen = pygame.display.set_mode((640, 480))
         self.display = pygame.Surface((320, 240))
 
@@ -31,8 +32,10 @@ class Editor:
         self.tilemap = Tilemap(self, tile_size=16)
         
         try:
+            # here is where one can either change or just use map.json 
             self.tilemap.load('map.json')
         except FileNotFoundError:
+            # otherwise we just pass for creating a new map 
             pass
         
         self.scroll = [0, 0]
